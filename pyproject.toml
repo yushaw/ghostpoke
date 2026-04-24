@@ -1,0 +1,12 @@
+[project]
+name = "ghostpoke-demo"
+version = "0.1.0"
+description = "Standalone macOS background click probe"
+requires-python = ">=3.11"
+dependencies = [
+  "pyobjc-framework-Cocoa>=11.0",
+  "pyobjc-framework-Quartz>=11.0",
+]
+
+[tool.uv]
+package = false

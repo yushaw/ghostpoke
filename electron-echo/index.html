@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Electron Echo</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 100vw; height: 100vh;
+        background: #111;
+        color: #ddd;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Mono", monospace;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        user-select: none;
+      }
+
+      .sec {
+        padding: 10px 20px;
+        border-bottom: 1px solid #1e1e2e;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .tag {
+        font-size: 9px; text-transform: uppercase; letter-spacing: 1.5px;
+        width: 46px; flex-shrink: 0; text-align: right;
+      }
+
+      /* -- click -- */
+      #sec-click { height: 82px; justify-content: center; }
+      #btn {
+        padding: 10px 48px;
+        border: 2px solid #e74c3c;
+        border-radius: 10px;
+        background: rgba(231,76,60,0.08);
+        color: #e74c3c;
+        font-size: 15px; font-weight: 700;
+        cursor: pointer;
+        transition: all 0.08s;
+        letter-spacing: 0.5px;
+      }
+      #btn.on {
+        background: rgba(231,76,60,0.35);
+        transform: scale(0.94);
+        border-color: #ff6b5b;
+      }
+      .cnt { font-size: 22px; font-weight: 700; min-width: 28px; }
+      .cnt-click { color: #e74c3c; }
+
+      /* -- key -- */
+      #sec-key { height: 54px; }
+      #term {
+        flex: 1;
+        background: #0a0a18;
+        border: 1px solid #282840;
+        border-radius: 6px;
+        padding: 6px 12px;
+        font-size: 14px;
+        color: #f39c12;
+        height: 34px;
+        line-height: 22px;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      #caret {
+        display: inline-block; width: 8px; height: 16px;
+        background: #f39c12; vertical-align: text-bottom;
+        animation: blink 1s step-end infinite;
+      }
+      @keyframes blink { 50% { opacity: 0; } }
+
+      /* -- scroll -- */
+      #sec-scroll {
+        flex: 1; min-height: 0;
+        flex-direction: column; align-items: stretch;
+        padding-bottom: 6px;
+      }
+      #sec-scroll > .row { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; flex-shrink: 0; }
+      #list {
+        flex: 1; min-height: 0;
+        overflow-y: auto;
+        background: #0a0a18;
+        border: 1px solid #282840;
+        border-radius: 6px;
+      }
+      #list::-webkit-scrollbar { width: 6px; }
+      #list::-webkit-scrollbar-thumb { background: #2ecc71; border-radius: 3px; }
+      #list::-webkit-scrollbar-track { background: transparent; }
+      .item {
+        padding: 5px 14px;
+        font-size: 12px;
+        color: #666;
+        border-bottom: 1px solid #141420;
+      }
+      .item:nth-child(odd) { background: rgba(46,204,113,0.03); }
+      .cnt-scroll { color: #2ecc71; }
+
+      /* -- drag -- */
+      #sec-drag { height: 72px; }
+      #track {
+        flex: 1; height: 6px;
+        background: #1a1a2e;
+        border-radius: 3px;
+        position: relative;
+      }
+      #fill {
+        height: 100%; width: 0;
+        background: linear-gradient(90deg, rgba(155,89,182,0.3), rgba(155,89,182,0.6));
+        border-radius: 3px;
+        transition: width 0.04s;
+      }
+      #handle {
+        width: 18px; height: 18px;
+        border-radius: 50%;
+        background: #9b59b6;
+        position: absolute;
+        top: 50%; left: 0;
+        transform: translate(-50%, -50%);
+        transition: left 0.04s;
+        box-shadow: 0 0 10px rgba(155,89,182,0.5);
+      }
+      .cnt-drag { color: #9b59b6; }
+
+      /* -- move -- */
+      #sec-move { height: 72px; }
+      #zone {
+        flex: 1; height: 100%;
+        background: #0a0a18;
+        border: 1px solid #282840;
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+      }
+      #dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: #3498db;
+        position: absolute;
+        transform: translate(-50%, -50%);
+        display: none;
+        box-shadow: 0 0 14px rgba(52,152,219,0.6);
+        transition: left 0.06s, top 0.06s;
+      }
+      #xhair-h, #xhair-v {
+        position: absolute; background: rgba(52,152,219,0.12); display: none;
+      }
+      #xhair-h { width: 100%; height: 1px; left: 0; }
+      #xhair-v { width: 1px; height: 100%; top: 0; }
+      .cnt-move { color: #3498db; }
+      #pos { font-size: 11px; color: #3498db; width: 80px; text-align: right; }
+    </style>
+  </head>
+  <body>
+
+    <!-- click -->
+    <div class="sec" id="sec-click">
+      <span class="tag" style="color:#e74c3c">click</span>
+      <button id="btn">Click Me</button>
+      <span class="cnt cnt-click" id="c-click">0</span>
+    </div>
+
+    <!-- key -->
+    <div class="sec" id="sec-key">
+      <span class="tag" style="color:#f39c12">key</span>
+      <div id="term"><span id="typed"></span><span id="caret"></span></div>
+      <span class="cnt" style="color:#f39c12" id="c-key">0</span>
+    </div>
+
+    <!-- scroll -->
+    <div class="sec" id="sec-scroll">
+      <div class="row">
+        <span class="tag" style="color:#2ecc71">scroll</span>
+        <span class="cnt cnt-scroll" id="c-scroll">0</span>
+      </div>
+      <div id="list"></div>
+    </div>
+
+    <!-- drag -->
+    <div class="sec" id="sec-drag">
+      <span class="tag" style="color:#9b59b6">drag</span>
+      <div id="track"><div id="fill"></div><div id="handle"></div></div>
+      <span class="cnt cnt-drag" id="c-drag">0%</span>
+    </div>
+
+    <!-- move -->
+    <div class="sec" id="sec-move">
+      <span class="tag" style="color:#3498db">move</span>
+      <div id="zone">
+        <div id="xhair-h"></div>
+        <div id="xhair-v"></div>
+        <div id="dot"></div>
+      </div>
+      <span id="pos">--</span>
+    </div>
+
+    <script>
+    const counts = { click: 0, move: 0, scroll: 0, key: 0, drag: 0 };
+    const eb = () => window.echoBridge;
+
+    // populate scroll list
+    const list = document.getElementById('list');
+    for (let i = 1; i <= 60; i++) {
+      const d = document.createElement('div');
+      d.className = 'item';
+      d.textContent = 'Item ' + i + '  --  ' + ['alpha','bravo','charlie','delta','echo','foxtrot'][i % 6];
+      list.appendChild(d);
+    }
+
+    // ---- click ----
+    const btn = document.getElementById('btn');
+    document.addEventListener('mousedown', () => btn.classList.add('on'));
+    document.addEventListener('mouseup', () => setTimeout(() => btn.classList.remove('on'), 120));
+    document.addEventListener('click', async (e) => {
+      counts.click++;
+      document.getElementById('c-click').textContent = counts.click;
+      if (eb()) try { await eb().clicked({ x: e.clientX, y: e.clientY, rendererCount: counts.click }); } catch {}
+    });
+
+    // ---- key ----
+    const typed = document.getElementById('typed');
+    let textBuf = '';
+    document.addEventListener('keydown', async (e) => {
+      counts.key++;
+      document.getElementById('c-key').textContent = counts.key;
+
+      if (e.key === 'Backspace') { textBuf = textBuf.slice(0, -1); }
+      else if (e.key.length === 1 && !e.metaKey && !e.ctrlKey) { textBuf += e.key; }
+      else { textBuf += '[' + e.key + ']'; }
+      typed.textContent = textBuf.length > 40 ? textBuf.slice(-40) : textBuf;
+
+      if (eb()) try { await eb().keyPressed({ key: e.key, code: e.code, rendererCount: counts.key }); } catch {}
+    });
+
+    // ---- scroll ----
+    list.addEventListener('wheel', async (e) => {
+      counts.scroll++;
+      document.getElementById('c-scroll').textContent = counts.scroll;
+      if (eb()) try { await eb().scrolled({ dy: e.deltaY, rendererCount: counts.scroll }); } catch {}
+    }, { passive: true });
+    // prevent page scroll outside list
+    document.addEventListener('wheel', (e) => {
+      if (!list.contains(e.target)) e.preventDefault();
+    }, { passive: false });
+
+    // ---- drag ----
+    const track  = document.getElementById('track');
+    const handle = document.getElementById('handle');
+    const fill   = document.getElementById('fill');
+    const cDrag  = document.getElementById('c-drag');
+    let dragging = false;
+
+    function setSlider(clientX) {
+      const r = track.getBoundingClientRect();
+      const pct = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+      handle.style.left = (pct * 100) + '%';
+      fill.style.width  = (pct * 100) + '%';
+      cDrag.textContent  = Math.round(pct * 100) + '%';
+    }
+
+    document.addEventListener('mousedown', (e) => {
+      const r = track.getBoundingClientRect();
+      if (e.clientY >= r.top - 24 && e.clientY <= r.bottom + 24 &&
+          e.clientX >= r.left - 10 && e.clientX <= r.right + 10) {
+        dragging = true;
+        setSlider(e.clientX);
+      }
+    });
+    document.addEventListener('mousemove', (e) => {
+      if (!dragging) return;
+      setSlider(e.clientX);
+      counts.drag++;
+      if (eb()) try { eb().dragged({ x: e.clientX, rendererCount: counts.drag }); } catch {}
+    });
+    document.addEventListener('mouseup', () => { dragging = false; });
+
+    // ---- move ----
+    const zone  = document.getElementById('zone');
+    const dot   = document.getElementById('dot');
+    const xhH   = document.getElementById('xhair-h');
+    const xhV   = document.getElementById('xhair-v');
+    const posEl = document.getElementById('pos');
+    let lastMoveTs = 0;
+
+    zone.addEventListener('mousemove', async (e) => {
+      if (dragging) return;
+      const now = Date.now();
+      if (now - lastMoveTs < 30) return;
+      lastMoveTs = now;
+
+      const r = zone.getBoundingClientRect();
+      const x = e.clientX - r.left;
+      const y = e.clientY - r.top;
+      dot.style.left = x + 'px';
+      dot.style.top  = y + 'px';
+      dot.style.display = 'block';
+      xhH.style.top = y + 'px'; xhH.style.display = 'block';
+      xhV.style.left = x + 'px'; xhV.style.display = 'block';
+      posEl.textContent = Math.round(x) + ', ' + Math.round(y);
+
+      counts.move++;
+      if (eb()) try { await eb().moved({ x: e.clientX, y: e.clientY, rendererCount: counts.move }); } catch {}
+    });
+    </script>
+  </body>
+</html>
