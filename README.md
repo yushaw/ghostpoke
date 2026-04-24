@@ -4,7 +4,7 @@ A macOS background event injection tool -- sends click/move/drag/scroll/key even
 
 ## Demo
 
-<video src="ghostpoke-demo.mp4" controls width="100%"></video>
+![Demo](ghostpoke-demo.mp4)
 
 ## Files
 
